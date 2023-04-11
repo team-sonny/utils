@@ -6,8 +6,9 @@ import numpy as np
 import pandas as pd
 import soundfile as sf
 import whisper
+from transformers import AutoTokenizer
 
-
+tokenizer = AutoTokenizer.from_pretrained("Klue/RoBERTa-large")
 
 N_SAMPLES = 480000
 
@@ -42,6 +43,7 @@ def collate_fn(data):
     outputs = {}
     for key, value in zip(("text_tokens","labels","wav_tokens"),zip(*data)):
         outputs[key]=value
+    outputs["text_tokens"] = tokenizer(outputs["text_tokens"])
     return outputs
     
 
