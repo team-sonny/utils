@@ -43,7 +43,8 @@ def collate_fn(data):
     outputs = {}
     for key, value in zip(("text_tokens","labels","wav_tokens"),zip(*data)):
         outputs[key]=value
-    outputs["text_tokens"] = tokenizer(outputs["text_tokens"])
+    outputs["text_tokens"] = tokenizer(outputs["text_tokens"],return_tensors="pt",padding=True)
+    outputs["wav_tokens"] = torch.concat([i.unsqueeze(0) for i in outputs["wav_tokens"]])
     return outputs
     
 
@@ -73,7 +74,7 @@ class CustomDataset(Dataset):
             # audio_input, sample_rate = sf.read(self.wav_dir[idx])
             # audio_input = pad_or_trim(audio_input)
             # audio_input_values = self.processor(audio_input, sampling_rate=sample_rate, return_tensors="pt").input_values.squeeze(0)
-            audio_input = whisper.load_audio(self.wav_dir)
+            audio_input = whisper.load_audio(self.wav_dir[idx])
             audio_input = whisper.pad_or_trim(audio_input)  
             audio_input_values = whisper.log_mel_spectrogram(audio_input)
             return self.text_data[idx], self.dic[text_label], audio_input_values
