@@ -5,6 +5,7 @@ import torch
 import numpy as np
 import pandas as pd
 import soundfile as sf
+import whisper
 
 
 
@@ -37,6 +38,12 @@ def pad_or_trim(array, length: int = N_SAMPLES, *, axis: int = -1):
 
     return array
 
+def collate_fn(data):
+    outputs = {}
+    for key, value in zip(("text_tokens","labels","wav_tokens"),zip(*data)):
+        outputs[key]=value
+    return outputs
+    
 
 class CustomDataset(Dataset):
     def __init__(self, csv_path, processor=None):
@@ -60,11 +67,14 @@ class CustomDataset(Dataset):
             text_label = self.labels[idx]
 
         if self.processor:
-            audio_input, sample_rate = sf.read(self.wav_dir[idx])
-            audio_input = pad_or_trim(audio_input)
-            audio_input_values = self.processor(audio_input, sampling_rate=sample_rate, return_tensors="pt").input_values.squeeze(0)
-
-            return self.text_data[idx], audio_input_values, self.dic[text_label]
+            # in whisper
+            # audio_input, sample_rate = sf.read(self.wav_dir[idx])
+            # audio_input = pad_or_trim(audio_input)
+            # audio_input_values = self.processor(audio_input, sampling_rate=sample_rate, return_tensors="pt").input_values.squeeze(0)
+            audio_input = whisper.load_audio(self.wav_dir)
+            audio_input = whisper.pad_or_trim(audio_input)  
+            audio_input_values = whisper.log_mel_spectrogram(audio_input)
+            return self.text_data[idx], self.dic[text_label], audio_input_values
         
         else:
             return self.text_data[idx], self.dic[text_label]
