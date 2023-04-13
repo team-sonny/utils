@@ -45,6 +45,7 @@ def collate_fn(data):
         outputs[key]=value
     outputs["text_tokens"] = tokenizer(outputs["text_tokens"],return_tensors="pt",padding=True)
     outputs["wav_tokens"] = torch.concat([i.unsqueeze(0) for i in outputs["wav_tokens"]])
+    outputs['labels'] = torch.tensor(outputs['labels'])
     return outputs
     
 
