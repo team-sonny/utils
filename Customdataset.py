@@ -39,27 +39,29 @@ def pad_or_trim(array, length: int = N_SAMPLES, *, axis: int = -1):
 
     return array
 
-def collate_fn(data):
-    # replace wrong audio file(AI hub)
-    batch_size = len(data)
-    data = list(filter(lambda x: x is not None, data))
+def make_collate_fn(datasets):
+    def collate_fn(data):
+        # replace wrong audio file(AI hub)
+        batch_size = len(data)
+        data = list(filter(lambda x: x is not None, data))
 
-    if batch_size > len(data):
-        db_len = len(train_datasets)
-        diff = batch_size - len(data)
-        while diff != 0:
-            a = train_datasets[np.random.randint(0, db_len)]
-            if a is None:
-                continue
-            data.append(a)
-            diff -= 1
+        if batch_size > len(data):
+            db_len = len(datasets)
+            diff = batch_size - len(data)
+            while diff != 0:
+                a = datasets[np.random.randint(0, db_len)]
+                if a is None:
+                    continue
+                data.append(a)
+                diff -= 1
 
-    outputs = {}
-    for key, value in zip(("text_tokens","labels","wav_tokens"),zip(*data)):
-        outputs[key]=value
-    outputs["wav_tokens"] = torch.concat([i.unsqueeze(0) for i in outputs["wav_tokens"]])
-    outputs['labels'] = torch.tensor(outputs['labels'])
-    return outputs
+        outputs = {}
+        for key, value in zip(("text_tokens","labels","wav_tokens"),zip(*data)):
+            outputs[key]=value
+        outputs["wav_tokens"] = torch.concat([i.unsqueeze(0) for i in outputs["wav_tokens"]])
+        outputs['labels'] = torch.tensor(outputs['labels'])
+        return outputs
+    return collate_fn
 
 
 class CustomDataset(Dataset):
